@@ -54,15 +54,26 @@
     	}
     	else{
     		noti.text('');
-    		authForm.css('display','none');
-    		chatSection.show();
+    		console.log('calling add user');
     		addUser(nick);
     	}
     });
 
     function addUser(nick){
-    	socket.emit('add user',{'user':nick});
-    	console.log('add user emitted');
+    	console.log('in the adduser');
+    	socket.emit('add user',{'user':nick},function(data){
+    		console.log('callback data'+data);
+    		if(data == true){
+    			console.log('user exists');
+    			noti.text('User with username'+ ' ' + nick + 'exists');
+    		}
+    		else{
+    			console.log(nick + 'connected');
+    			noti.text('Messge sent to server');
+    		    authForm.css('display','none');
+    		    chatSection.show();
+    		}
+    	});
     }
 
     messageForm.on('submit',function(e){
@@ -74,7 +85,6 @@
     	}
     	else{
     		socket.emit('new message',{'messageText':message,'sender':nickname.val()});
-    		noti.text('Messge sent to server');
     	}
     });
 
