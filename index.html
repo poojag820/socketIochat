@@ -1,0 +1,99 @@
+<html>
+<head>
+  <title>Chat</title>
+  <style>
+    #chatSection{
+    	display: none;
+    }
+  </style>
+</head>
+<body>
+  <span id = 'noti'></span>
+  <div id = 'authSection'>
+    <form id = 'authForm' method="post">
+      <input type="text" id = 'nickname' placeholder = 'Enter your nickname'>
+      <input type="submit" id = 'enterChat' value = 'Enter' />
+    </form>
+  </div>
+  <div id = 'chatSection'>
+    <h1>chat section</h1>
+    <form method="post" id = 'messageForm'>
+       <textarea id = 'messageText' placeholder = 'Message text...'></textarea><br/>
+       <input type="submit" id = 'sendMessage' value="Send" />
+    </form>
+    <br/>
+    <h1>List of online users</h1>
+    <div id = 'onlineUsers'>
+    </div>
+    <h1>Chat of group:</h1>
+    <div id = 'chatMessages'>
+    </div>
+  </div>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+  <script>
+    var socket = io.connect(),
+        authForm = $('#authForm'),
+        nickname = $('#nickname'),
+        enterChat = $('#enterChat'),
+        chatSection = $('#chatSection'),
+        authSection = $('#authSection'),
+        noti = $('#noti'),
+        onlineUsers = $('#onlineUsers'),
+        sendMessage = $('#sendMessage'),
+        messageText = $('#messageText'),
+        messageForm = $('#messageForm'),
+        chatMessages = $('#chatMessages');
+
+    authForm.on('submit',function(e){
+    	e.preventDefault();
+    	nick = nickname.val();
+    	if(nick == ''){
+    		noti.css('color','red');
+    		noti.text('Give nickname');
+    	}
+    	else{
+    		noti.text('');
+    		authForm.css('display','none');
+    		chatSection.show();
+    		addUser(nick);
+    	}
+    });
+
+    function addUser(nick){
+    	socket.emit('add user',{'user':nick});
+    	console.log('add user emitted');
+    }
+
+    messageForm.on('submit',function(e){
+    	e.preventDefault();
+    	message = messageText.val();
+    	if(!message){
+    		noti.text('Message field is required!');
+    		noti.css('color','red');
+    	}
+    	else{
+    		socket.emit('new message',{'messageText':message,'sender':nickname.val()});
+    		noti.text('Messge sent to server');
+    	}
+    });
+
+    socket.on('new message',function(data){
+    	var message = data.messageText,
+    	    user = data.sender;
+    	var list = user + ':' + message + '<br/>';
+    	chatMessages.append(list);
+    });
+
+    //socket.io stuff here
+    socket.on('updateUsers',function(data){
+    	onlineUsers.empty();
+    	users = data.users;
+    	users.forEach(function(user){
+    		var list = user + '<br/>';
+    		onlineUsers.append(list);
+    	});
+    });
+  </script>
+</body>
+</html>
